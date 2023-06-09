@@ -71,10 +71,9 @@ func (bt *BTree) DeleteV1(key []byte) bool {
 	bt.lock.Lock()
 	olderItem := bt.tree.Delete(&it)
 	bt.lock.Unlock()
-	if olderItem != nil {
+	if olderItem == nil {
 		return false
 	}
-
 	return true
 }
 

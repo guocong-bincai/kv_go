@@ -21,6 +21,14 @@ func TestBTree_Put(t *testing.T) {
 	fmt.Println(res2)
 }
 
+func TestBTree_PutV1(t *testing.T) {
+	bt := NewBTree()
+
+	res := bt.PutV1(nil, &data.LogRecordPos{Fid: 1, Offset: 100})
+	assert.True(t, res)
+
+}
+
 func TestBTree_Get(t *testing.T) {
 	bt := NewBTree()
 
@@ -38,6 +46,16 @@ func TestBTree_Get(t *testing.T) {
 
 }
 
+func TestBTree_GetV1(t *testing.T) {
+	bt := NewBTree()
+	res1 := bt.PutV1(nil, &data.LogRecordPos{Fid: 1, Offset: 100})
+	assert.True(t, res1)
+
+	pos1 := bt.GetV1(nil)
+	assert.Equal(t, uint32(1), pos1.Fid)
+	assert.Equal(t, int64(100), pos1.Offset)
+}
+
 func TestBTree_Delete(t *testing.T) {
 	bt := NewBTree()
 	res := bt.Put(nil, &data.LogRecordPos{Fid: 1, Offset: 100})
@@ -48,5 +66,22 @@ func TestBTree_Delete(t *testing.T) {
 
 	res4 := bt.Delete([]byte("aaa"))
 	fmt.Println(res4)
+
+}
+
+func TestBTree_DeleteV1(t *testing.T) {
+	bt := NewBTree()
+
+	res := bt.PutV1(nil, &data.LogRecordPos{Fid: 1, Offset: 100})
+	assert.True(t, res)
+
+	res4 := bt.DeleteV1(nil)
+	assert.True(t, res4)
+
+	res1 := bt.PutV1([]byte("aaa"), &data.LogRecordPos{Fid: 1, Offset: 100})
+	assert.True(t, res1)
+
+	res2 := bt.DeleteV1([]byte("aaa"))
+	assert.True(t, res2)
 
 }
