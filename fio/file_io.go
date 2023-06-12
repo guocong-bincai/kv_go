@@ -7,15 +7,19 @@ type FileIO struct {
 	fd *os.File
 }
 
-// NewFileManager 初始化标准文件
-//func NewFileManager(fileName string) *FileIO {
-//	fd, err := os.OpenFile(
-//		fileName,
-//		os.O_CREATE|os.O_RDWR|os.O_APPEND,
-//		DataFilePerm
-//	)
-//
-//}
+// NewFileIOManager 初始化标准文件
+func NewFileIOManager(fileName string) (*FileIO, error) {
+	fd, err := os.OpenFile(
+		fileName,
+		os.O_CREATE|os.O_RDWR|os.O_APPEND,
+		DataFilePerm,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &FileIO{fd: fd}, nil
+
+}
 
 // Read 从文件的给定位置读取对应的数据
 func (f *FileIO) Read(b []byte, offset int64) (int, error) {
