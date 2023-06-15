@@ -21,3 +21,7 @@ func (df *DataFile) Write(buf []byte) error {
 func (df *DataFile) Sync() error {
 	return nil
 }
+
+func (df *DataFile) ReadLogRecord(offset int64) (*LogRecord, error) {
+	return nil, nil
+}
