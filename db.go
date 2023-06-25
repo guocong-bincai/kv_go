@@ -285,3 +285,30 @@ func (db *DB) loadIndexFromDataFile() error {
 	}
 	return nil
 }
+
+// Delete 根据key 删除对应的数据
+func (db *DB) Delete(key []byte) error {
+	if len(key) == 0 {
+		return ErrKeyIsEmpty
+	}
+	//先检查 key是否存在，如果不存在直接返回
+	if pos := db.index.Get(key); pos == nil {
+		return nil
+	}
+
+	//构造 LogRecord，标识其是被删除的
+	logRecord := &data.LogRecord{Key: key, Type: data.LogRecordDeleted}
+	//写入到数据文件中
+	_, err := db.appendLogRecord(logRecord)
+	if err != nil {
+		return nil
+	}
+	//从内存索引中将对应的key删除
+	ok := db.index.Delete(key)
+	if !ok {
+		return ErrIndexUpdateFailed
+	}
+	return nil
+}
+
+//第六集 04:38
