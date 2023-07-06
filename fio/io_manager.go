@@ -8,13 +8,19 @@ type IOManager interface {
 	Read([]byte, int64) (int, error)
 
 	//Write 写入字节数组到文件中
-	Write([]byte)
+	Write([]byte) (int, error)
 
 	//Sync 持久化数据
 	Sync() error
 
 	//Close 关闭文件
 	Close() error
+
+	//Size 获取到文件大小的方法
+	Size() (int64, error)
 }
 
-//4808
+// NewIOManager 初始化IOManager，目前只支持标准，FileIO
+func NewIOManager(fileName string) (IOManager, error) {
+	return NewFileIOManager(fileName)
+}

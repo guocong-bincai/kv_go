@@ -40,3 +40,12 @@ func (f *FileIO) Sync() error {
 func (f *FileIO) Close() error {
 	return f.fd.Close()
 }
+
+// Size 获取到文件大小的方法
+func (f *FileIO) Size() (int64, error) {
+	stat, err := f.fd.Stat()
+	if err != nil {
+		return 0, err
+	}
+	return stat.Size(), nil
+}
