@@ -95,7 +95,7 @@ func decodeLogRecordHeader(buf []byte) (*logRecordHeader, int64) {
 	valueSize, n := binary.Varint(buf[index:])
 	header.valueSize = uint32(valueSize)
 	index += n
-	fmt.Println("crc: %d", header.crc)
+	fmt.Printf("crc: %d", header.crc)
 	return header, int64(index)
 }
 
