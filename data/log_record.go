@@ -2,7 +2,6 @@ package data
 
 import (
 	"encoding/binary"
-	"fmt"
 	"hash/crc32"
 )
 
@@ -86,16 +85,16 @@ func decodeLogRecordHeader(buf []byte) (*logRecordHeader, int64) {
 	}
 
 	var index = 5
-	//取出实际的key size
+	// 取出实际的 key size
 	keySize, n := binary.Varint(buf[index:])
 	header.keySize = uint32(keySize)
 	index += n
 
-	//取出实际的 value size
+	//取出实际的key size
 	valueSize, n := binary.Varint(buf[index:])
 	header.valueSize = uint32(valueSize)
 	index += n
-	fmt.Printf("crc: %d", header.crc)
+
 	return header, int64(index)
 }
 

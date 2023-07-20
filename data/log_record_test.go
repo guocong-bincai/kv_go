@@ -1,7 +1,6 @@
 package data
 
 import (
-	"fmt"
 	"github.com/stretchr/testify/assert"
 	"hash/crc32"
 	"testing"
@@ -20,6 +19,7 @@ func TestEncodeLogRecord(t *testing.T) {
 	assert.Greater(t, n1, int64(5))
 	t.Log(res1)
 	t.Log(n1)
+
 	// value 为空的情况
 	rec2 := &LogRecord{
 		Key:  []byte("name"),
@@ -30,7 +30,19 @@ func TestEncodeLogRecord(t *testing.T) {
 	assert.Greater(t, n2, int64(5))
 	t.Log(res2)
 	t.Log(n2)
+
 	// 对Deleted 情况的测试
+	rec3 := &LogRecord{
+		Key:   []byte("name"),
+		Value: []byte("bitcask-go"),
+		Type:  LogRecordDeleted,
+	}
+	res3, n3 := EncodeLogRecord(rec3)
+	assert.NotNil(t, res3)
+	//crc + type 固定的5个字节，所以结果一定是大于5的
+	assert.Greater(t, n3, int64(5))
+	t.Log(res3)
+	t.Log(n3)
 }
 
 func TestDecodeLogRecordHeader(t *testing.T) {
@@ -52,6 +64,11 @@ func TestDecodeLogRecordHeader(t *testing.T) {
 	assert.Equal(t, uint32(1899978003), h2.crc)
 	assert.Equal(t, LogRecordNormal, h2.recordType)
 	assert.Equal(t, uint32(4), h2.keySize)
+
+	headerBuf3 := []byte{197, 23, 11, 18, 1, 8, 20}
+	h3, size3 := decodeLogRecordHeader(headerBuf3)
+	t.Log(h3, size3)
+
 }
 
 func TestGetLogRecordCRC(t *testing.T) {
@@ -73,6 +90,8 @@ func TestGetLogRecordCRC(t *testing.T) {
 	}
 	headerBuf2 := []byte{19, 93, 63, 113, 0, 8, 0}
 	crc2 := getLogRecordCRC(rec2, headerBuf2[crc32.Size:])
-	fmt.Println(crc2)
+	t.Log(crc2)
+	//todo
 	assert.Equal(t, uint32(1899978003), crc2)
+
 }
