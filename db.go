@@ -13,12 +13,13 @@ import (
 )
 
 type DB struct {
-	options    Options
-	mu         *sync.RWMutex
-	fileIds    []int                     //文件id，只能在加载文件索引的时候使用，不能在其他的地方更新和使用
-	activeFile *data.DataFile            //当前活跃数据文件，可以用于写入
-	olderFile  map[uint32]*data.DataFile //旧的数据文件，只能用于读
-	index      index.Indexer             //内存索引
+	options     Options
+	mu          *sync.RWMutex
+	fileIds     []int                     //文件id，只能在加载文件索引的时候使用，不能在其他的地方更新和使用
+	activeFile  *data.DataFile            //当前活跃数据文件，可以用于写入
+	olderFile   map[uint32]*data.DataFile //旧的数据文件，只能用于读
+	index       index.Indexer             //内存索引
+	reclaimSize int64                     // 表示有多少数据是无效的
 }
 
 // Open 打开 bitcask 存储引擎实例
@@ -71,9 +72,11 @@ func (db *DB) Put(key []byte, value []byte) error {
 		return err
 	}
 	//更新内存索引
-	if ok := db.index.Put(key, pos); !ok {
-		return ErrIndexUpdateFailed
+	// 更新内存索引
+	if oldPos := db.index.Put(key, pos); oldPos != nil {
+		db.reclaimSize += int64(oldPos.Size)
 	}
+
 	return nil
 }
 
@@ -304,7 +307,7 @@ func (db *DB) Delete(key []byte) error {
 		return nil
 	}
 	//从内存索引中将对应的key删除
-	ok := db.index.Delete(key)
+	_, ok := db.index.Delete(key)
 	if !ok {
 		return ErrIndexUpdateFailed
 	}

@@ -36,6 +36,7 @@ type logRecordHeader struct {
 type LogRecordPos struct {
 	Fid    uint32 //文件id，表示的是将数据存储到那个位置中
 	Offset int64  //偏移，表示将数据存储到了数据文件中的那个位置
+	Size   uint32 // 标识数据在磁盘上的大小
 }
 
 // EncodeLogRecord 对 LogRecord 进行编码，返回字节数组及长度

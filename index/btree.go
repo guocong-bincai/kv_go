@@ -21,21 +21,81 @@ func NewBTree() *BTree {
 	}
 }
 
-// PutV1 存入数据
-func (bt *BTree) PutV1(key []byte, pos *data.LogRecordPos) bool {
-	it := Item{key: key, pos: pos}
-	bt.lock.Lock()
-	bt.tree.ReplaceOrInsert(&it)
-	bt.lock.Unlock()
+//// PutV1 存入数据
+//func (bt *BTree) PutV1(key []byte, pos *data.LogRecordPos) bool {
+//	it := Item{key: key, pos: pos}
+//	bt.lock.Lock()
+//	bt.tree.ReplaceOrInsert(&it)
+//	bt.lock.Unlock()
+//
+//	return true
+//}
+//
+//// Put 存入数据
+//func (bt *BTree) Put(key []byte, pos *data.LogRecordPos) *data.LogRecordPos {
+//	it := Item{key: key, pos: pos}
+//	bt.lock.Lock()
+//	oldItem := bt.tree.ReplaceOrInsert(&it)
+//	bt.lock.Unlock()
+//	if oldItem == nil {
+//		return nil
+//	}
+//	return oldItem.(*Item).pos
+//}
+//
+//// GetV1 查找数据
+//func (bt *BTree) GetV1(key []byte) *data.LogRecordPos {
+//	it := Item{key: key}
+//	btreeItem := bt.tree.Get(&it)
+//	if btreeItem == nil {
+//		return nil
+//	}
+//	return btreeItem.(*Item).pos
+//
+//}
+//
+//// Get 查找数据
+//func (bt *BTree) Get(key []byte) *data.LogRecordPos {
+//	it := Item{key: key}
+//	btreeItem := bt.tree.Get(&it)
+//	if btreeItem == nil {
+//		return nil
+//	}
+//	return btreeItem.(*Item).pos
+//
+//}
+//
+//// DeleteV1 删除数据
+//func (bt *BTree) DeleteV1(key []byte) bool {
+//	it := Item{key: key}
+//	bt.lock.Lock()
+//	olderItem := bt.tree.Delete(&it)
+//	bt.lock.Unlock()
+//	if olderItem == nil {
+//		return false
+//	}
+//	return true
+//}
+//
+//// Delete 删除数据
+//func (bt *BTree) Delete(key []byte) *data.LogRecordPos {
+//	it := Item{
+//		key: key,
+//	}
+//	bt.lock.Lock()
+//	olderItem := bt.tree.Delete(&it)
+//	bt.lock.Unlock()
+//	if olderItem != nil {
+//		return nil
+//	}
+//
+//	return olderItem.(*Item).pos
+//}
 
-	return true
-}
-
-// Put 存入数据
 func (bt *BTree) Put(key []byte, pos *data.LogRecordPos) *data.LogRecordPos {
-	it := Item{key: key, pos: pos}
+	it := &Item{key: key, pos: pos}
 	bt.lock.Lock()
-	oldItem := bt.tree.ReplaceOrInsert(&it)
+	oldItem := bt.tree.ReplaceOrInsert(it)
 	bt.lock.Unlock()
 	if oldItem == nil {
 		return nil
@@ -43,51 +103,22 @@ func (bt *BTree) Put(key []byte, pos *data.LogRecordPos) *data.LogRecordPos {
 	return oldItem.(*Item).pos
 }
 
-// GetV1 查找数据
-func (bt *BTree) GetV1(key []byte) *data.LogRecordPos {
-	it := Item{key: key}
-	btreeItem := bt.tree.Get(&it)
-	if btreeItem == nil {
-		return nil
-	}
-	return btreeItem.(*Item).pos
-
-}
-
-// Get 查找数据
 func (bt *BTree) Get(key []byte) *data.LogRecordPos {
-	it := Item{key: key}
-	btreeItem := bt.tree.Get(&it)
+	it := &Item{key: key}
+	btreeItem := bt.tree.Get(it)
 	if btreeItem == nil {
 		return nil
 	}
 	return btreeItem.(*Item).pos
-
 }
 
-// DeleteV1 删除数据
-func (bt *BTree) DeleteV1(key []byte) bool {
-	it := Item{key: key}
+func (bt *BTree) Delete(key []byte) (*data.LogRecordPos, bool) {
+	it := &Item{key: key}
 	bt.lock.Lock()
-	olderItem := bt.tree.Delete(&it)
+	oldItem := bt.tree.Delete(it)
 	bt.lock.Unlock()
-	if olderItem == nil {
-		return false
+	if oldItem == nil {
+		return nil, false
 	}
-	return true
-}
-
-// Delete 删除数据
-func (bt *BTree) Delete(key []byte) *data.LogRecordPos {
-	it := Item{
-		key: key,
-	}
-	bt.lock.Lock()
-	olderItem := bt.tree.Delete(&it)
-	bt.lock.Unlock()
-	if olderItem != nil {
-		return nil
-	}
-
-	return olderItem.(*Item).pos
+	return oldItem.(*Item).pos, true
 }
