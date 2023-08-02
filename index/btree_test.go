@@ -55,19 +55,19 @@ import (
 //	assert.Equal(t, int64(100), pos1.Offset)
 //}
 //
-////func TestBTree_Delete(t *testing.T) {
-////	bt := NewBTree()
-////	res := bt.Put(nil, &data.LogRecordPos{Fid: 1, Offset: 100})
-////	fmt.Println(res)
-////
-////	res3 := bt.Put([]byte("aaa"), &data.LogRecordPos{Fid: 12, Offset: 22})
-////	fmt.Println(res3)
-////
-////	res4 := bt.Delete([]byte("aaa"))
-////	fmt.Println(res4)
-////
-////}
+//func TestBTree_Delete(t *testing.T) {
+//	bt := NewBTree()
+//	res := bt.Put(nil, &data.LogRecordPos{Fid: 1, Offset: 100})
+//	fmt.Println(res)
 //
+//	res3 := bt.Put([]byte("aaa"), &data.LogRecordPos{Fid: 12, Offset: 22})
+//	fmt.Println(res3)
+//
+//	res4 := bt.Delete([]byte("aaa"))
+//	fmt.Println(res4)
+//
+//}
+
 //func TestBTree_DeleteV1(t *testing.T) {
 //	bt := NewBTree()
 //
