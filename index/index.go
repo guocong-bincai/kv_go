@@ -16,6 +16,9 @@ type Indexer interface {
 
 	// Delete 根据 key 删除对应的索引位置信息
 	Delete(key []byte) (*data.LogRecordPos, bool)
+
+	//Iterator 索引迭代器
+	Iterator(reverse bool) Iterator
 }
 
 type IndexType = int8

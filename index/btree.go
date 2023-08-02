@@ -54,6 +54,15 @@ func (bt *BTree) Delete(key []byte) (*data.LogRecordPos, bool) {
 	return oldItem.(*Item).pos, true
 }
 
+func (bt *BTree) Iterator(reverse bool) Iterator {
+	if bt.tree == nil {
+		return nil
+	}
+	bt.lock.RLock()
+	defer bt.lock.RUnlock()
+	return newBTreeIterator(bt.tree, reverse)
+}
+
 // BTree 索引迭代器
 type btreeIterator struct {
 	currIndex int     //当前遍历的下标位置
@@ -85,7 +94,7 @@ func newBTreeIterator(tree *btree.BTree, reverse bool) *btreeIterator {
 	}
 }
 
-func (bti *btreeIterator) Rewind(key []byte) {
+func (bti *btreeIterator) Rewind() {
 	bti.currIndex = 0
 }
 
