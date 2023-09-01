@@ -54,6 +54,10 @@ func (bt *BTree) Delete(key []byte) (*data.LogRecordPos, bool) {
 	return oldItem.(*Item).pos, true
 }
 
+func (bt *BTree) Size() int {
+	return bt.tree.Len()
+}
+
 func (bt *BTree) Iterator(reverse bool) Iterator {
 	if bt.tree == nil {
 		return nil
@@ -61,6 +65,10 @@ func (bt *BTree) Iterator(reverse bool) Iterator {
 	bt.lock.RLock()
 	defer bt.lock.RUnlock()
 	return newBTreeIterator(bt.tree, reverse)
+}
+
+func (bt *BTree) Close() error {
+	return nil
 }
 
 // BTree 索引迭代器
