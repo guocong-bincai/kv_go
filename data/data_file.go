@@ -13,7 +13,12 @@ var (
 	ErrInvalidCRC = errors.New("invalid crc value,log record may be corrupted")
 )
 
-const DataFileNameSuffix = ".data"
+const (
+	DataFileNameSuffix    = ".data"
+	HintFileName          = "hint-index"
+	MergeFinishedFileName = "merge-finished"
+	SeqNoFileName         = "seq-no"
+)
 
 // DataFile 数据文件
 type DataFile struct {
@@ -22,17 +27,30 @@ type DataFile struct {
 	IoManager fio.IOManager //io 读写管理
 }
 
-// OpenDataFile 打开你的数据文件
-func OpenDataFile(dirPath string, filed uint32) (*DataFile, error) {
-	//根据文件路径，生成文件名称
-	fileName := filepath.Join(dirPath, fmt.Sprintf("%09d", filed)+DataFileNameSuffix)
-	//初始化IOManager 管理器接口
-	ioManager, err := fio.NewIOManager(fileName)
+// OpenDataFile 打开新的数据文件
+func OpenDataFile(dirPath string, fileId uint32, ioType fio.FileIOType) (*DataFile, error) {
+	fileName := GetDataFileName(dirPath, fileId)
+	return newDataFile(fileName, fileId, ioType)
+}
+
+// OpenSeqNoFile 存储事务序列号的文件
+func OpenSeqNoFile(dirPath string) (*DataFile, error) {
+	fileName := filepath.Join(dirPath, SeqNoFileName)
+	return newDataFile(fileName, 0, fio.StandardFIO)
+}
+
+func GetDataFileName(dirPath string, fileId uint32) string {
+	return filepath.Join(dirPath, fmt.Sprintf("%09d", fileId)+DataFileNameSuffix)
+}
+
+func newDataFile(fileName string, fileId uint32, ioType fio.FileIOType) (*DataFile, error) {
+	// 初始化 IOManager 管理器接口
+	ioManager, err := fio.NewIOManager(fileName, ioType)
 	if err != nil {
 		return nil, err
 	}
 	return &DataFile{
-		FileId:    filed,
+		FileId:    fileId,
 		WriteOff:  0,
 		IoManager: ioManager,
 	}, nil

@@ -15,7 +15,7 @@ type BTree struct {
 	lock *sync.RWMutex //btree并发写是不安全的，需要加锁
 }
 
-// NewBTree 初始化BTree索引结构
+// NewBTree 新建 BTree 索引结构
 func NewBTree() *BTree {
 	return &BTree{
 		tree: btree.New(32),

@@ -11,6 +11,16 @@ type Options struct {
 	SyncWrites bool
 	//索引类型
 	IndexerType IndexerType
+	// 索引类型
+	IndexType IndexerType
+}
+
+// IteratorOptions 索引迭代器配置项
+type IteratorOptions struct {
+	//遍历前缀为制定值的 Key，默认为空
+	Prefix []byte
+	//是否反响遍历，默认false是正向
+	Reverse bool
 }
 
 type IndexerType = int8
@@ -25,5 +35,11 @@ const (
 var DefaultOptions = Options{
 	DirPath:      os.TempDir(),
 	DataFileSize: 256 * 1024 * 1024, //256M
+	SyncWrites:   false,
 	IndexerType:  BTree,
+}
+
+var DefaultIteratorOptions = IteratorOptions{
+	Prefix:  nil,
+	Reverse: false,
 }

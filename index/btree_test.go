@@ -7,84 +7,6 @@ import (
 	"testing"
 )
 
-//func TestBTree_Put(t *testing.T) {
-//	bt := NewBTree()
-//
-//	res := bt.Put(nil, &data.LogRecordPos{Fid: 1, Offset: 100})
-//	fmt.Println(res)
-//
-//	res1 := bt.Put([]byte("a"), &data.LogRecordPos{Fid: 1, Offset: 2})
-//	fmt.Println(res1)
-//
-//	res2 := bt.Put([]byte("as"), &data.LogRecordPos{Fid: 1, Offset: 3})
-//	fmt.Println(res2)
-//}
-//
-//func TestBTree_PutV1(t *testing.T) {
-//	bt := NewBTree()
-//
-//	res := bt.PutV1(nil, &data.LogRecordPos{Fid: 1, Offset: 100})
-//	assert.True(t, res)
-//
-//}
-//
-//func TestBTree_Get(t *testing.T) {
-//	bt := NewBTree()
-//
-//	res := bt.Put(nil, &data.LogRecordPos{Fid: 1, Offset: 100})
-//	fmt.Println(res)
-//
-//	pos1 := bt.Get(nil)
-//	assert.Equal(t, uint32(1), pos1.Fid)
-//
-//	res2 := bt.Put([]byte("a1"), &data.LogRecordPos{Fid: 1, Offset: 3})
-//	fmt.Println(res2)
-//
-//	res3 := bt.Put([]byte("a2"), &data.LogRecordPos{Fid: 1, Offset: 3})
-//	fmt.Println(res3)
-//
-//}
-//
-//func TestBTree_GetV1(t *testing.T) {
-//	bt := NewBTree()
-//	res1 := bt.PutV1(nil, &data.LogRecordPos{Fid: 1, Offset: 100})
-//	assert.True(t, res1)
-//
-//	pos1 := bt.GetV1(nil)
-//	assert.Equal(t, uint32(1), pos1.Fid)
-//	assert.Equal(t, int64(100), pos1.Offset)
-//}
-//
-//func TestBTree_Delete(t *testing.T) {
-//	bt := NewBTree()
-//	res := bt.Put(nil, &data.LogRecordPos{Fid: 1, Offset: 100})
-//	fmt.Println(res)
-//
-//	res3 := bt.Put([]byte("aaa"), &data.LogRecordPos{Fid: 12, Offset: 22})
-//	fmt.Println(res3)
-//
-//	res4 := bt.Delete([]byte("aaa"))
-//	fmt.Println(res4)
-//
-//}
-
-//func TestBTree_DeleteV1(t *testing.T) {
-//	bt := NewBTree()
-//
-//	res := bt.PutV1(nil, &data.LogRecordPos{Fid: 1, Offset: 100})
-//	assert.True(t, res)
-//
-//	res4 := bt.DeleteV1(nil)
-//	assert.True(t, res4)
-//
-//	res1 := bt.PutV1([]byte("aaa"), &data.LogRecordPos{Fid: 1, Offset: 100})
-//	assert.True(t, res1)
-//
-//	res2 := bt.DeleteV1([]byte("aaa"))
-//	assert.True(t, res2)
-//
-//}
-
 func TestBTree_Iterator(t *testing.T) {
 	bt1 := NewBTree()
 	//1.Btree 为空的情况
@@ -98,4 +20,35 @@ func TestBTree_Iterator(t *testing.T) {
 	})
 	iter2 := bt1.Iterator(false)
 	assert.Equal(t, true, iter2.Valid())
+	t.Log(iter2.Key())
+	t.Log(iter2.Value())
+	iter2.Next()
+	assert.Equal(t, false, iter2.Valid())
+
+	//有多条数据
+	bt1.Put([]byte("aaa"), &data.LogRecordPos{Fid: 1, Offset: 10})
+	bt1.Put([]byte("bbb"), &data.LogRecordPos{Fid: 1, Offset: 10})
+	bt1.Put([]byte("ccc"), &data.LogRecordPos{Fid: 1, Offset: 10})
+	bt1.Put([]byte("ddd"), &data.LogRecordPos{Fid: 1, Offset: 10})
+	iter3 := bt1.Iterator(false)
+	for iter3.Rewind(); iter3.Valid(); iter3.Next() {
+		t.Log("key= ", string(iter3.Key()))
+	}
+
+	iter4 := bt1.Iterator(false)
+	for iter4.Rewind(); iter4.Valid(); iter4.Next() {
+		t.Log("key= ", string(iter4.Key()))
+	}
+
+	//4.测试 seek
+	iter5 := bt1.Iterator(false)
+	for iter5.Seek([]byte("cc")); iter5.Valid(); iter5.Next() {
+		//t.Log(string(iter5.Key()))
+		assert.NotNil(t, iter5.Key())
+	}
+
+	//5.反向遍历 seek
+	iter6 := bt1.Iterator(true)
+	iter6.Seek([]byte("zzz"))
+	t.Log(string(iter6.Key()))
 }

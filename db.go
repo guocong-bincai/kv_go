@@ -2,14 +2,22 @@ package kv_go
 
 import (
 	"errors"
+	"fmt"
+	"github.com/gofrs/flock"
 	"io"
 	"kv-go/data"
+	"kv-go/fio"
 	"kv-go/index"
 	"os"
 	"sort"
 	"strconv"
 	"strings"
 	"sync"
+)
+
+const (
+	seqNoKey     = "seq.no"
+	fileLockName = "flock"
 )
 
 type DB struct {
@@ -20,6 +28,9 @@ type DB struct {
 	olderFile   map[uint32]*data.DataFile //旧的数据文件，只能用于读
 	index       index.Indexer             //内存索引
 	reclaimSize int64                     // 表示有多少数据是无效的
+	fileLock    *flock.Flock              // 文件锁保证多进程之间的互斥
+	seqNo       uint64                    // 事务序列号，全局递增
+	olderFiles  map[uint32]*data.DataFile // 旧的数据文件，只能用于读
 }
 
 // Open 打开 bitcask 存储引擎实例
@@ -40,7 +51,7 @@ func Open(options Options) (*DB, error) {
 		options:   options,
 		mu:        new(sync.RWMutex),
 		olderFile: make(map[uint32]*data.DataFile),
-		index:     index.NewIndexer(options.IndexerType),
+		index:     index.NewIndexer(options.IndexType, options.DirPath, options.SyncWrites),
 	}
 	//加载数据文件
 	if err := db.loadDataFiles(); err != nil {
@@ -52,6 +63,54 @@ func Open(options Options) (*DB, error) {
 		return nil, err
 	}
 	return db, nil
+}
+
+// Close 关闭数据库
+func (db *DB) Close() error {
+	defer func() {
+		// 释放文件锁
+		if err := db.fileLock.Unlock(); err != nil {
+			panic(fmt.Sprintf("failed to unlock the directory, %v", err))
+		}
+		// 关闭索引
+		if err := db.index.Close(); err != nil {
+			panic(fmt.Sprintf("failed to close index"))
+		}
+	}()
+	if db.activeFile == nil {
+		return nil
+	}
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	// 保存当前事务序列号
+	seqNoFile, err := data.OpenSeqNoFile(db.options.DirPath)
+	if err != nil {
+		return err
+	}
+	record := &data.LogRecord{
+		Key:   []byte(seqNoKey),
+		Value: []byte(strconv.FormatUint(db.seqNo, 10)),
+	}
+	encRecord, _ := data.EncodeLogRecord(record)
+	if err := seqNoFile.Write(encRecord); err != nil {
+		return err
+	}
+	if err := seqNoFile.Sync(); err != nil {
+		return err
+	}
+
+	//	关闭当前活跃文件
+	if err := db.activeFile.Close(); err != nil {
+		return err
+	}
+	// 关闭旧的数据文件
+	for _, file := range db.olderFiles {
+		if err := file.Close(); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // Put 写入 key/value 数据，key不能为空
@@ -96,19 +155,25 @@ func (db *DB) Get(key []byte) ([]byte, error) {
 		return nil, ErrKeyNotFound
 	}
 
+	// 从数据文件中获取value
+	return db.getValueByPosition(logRecordPos)
+}
+
+// 根据索引消息获取对应的value
+func (db *DB) getValueByPosition(pos *data.LogRecordPos) ([]byte, error) {
 	//根据文件id 找到对应的数据文件
 	var dataFile *data.DataFile
-	if db.activeFile.FileId == logRecordPos.Fid {
+	if db.activeFile.FileId == pos.Fid {
 		dataFile = db.activeFile
 	} else {
-		dataFile = db.olderFile[logRecordPos.Fid]
+		dataFile = db.olderFile[pos.Fid]
 	}
 	//数据文件为空
 	if dataFile == nil {
 		return nil, ErrDataFileFound
 	}
 	//根据偏移读量取对应的数据
-	logRecord, _, err := dataFile.ReadLogRecord(logRecordPos.Offset)
+	logRecord, _, err := dataFile.ReadLogRecord(pos.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -176,7 +241,7 @@ func (db *DB) setActiveDataFile() error {
 		initialFileId = db.activeFile.FileId + 1
 	}
 	//打开新的数据文件
-	dataFile, err := data.OpenDataFile(db.options.DirPath, initialFileId)
+	dataFile, err := data.OpenDataFile(db.options.DirPath, initialFileId, fio.StandardFIO)
 	if err != nil {
 		return err
 	}
@@ -224,7 +289,8 @@ func (db *DB) loadDataFiles() error {
 
 	//遍历每个文件id，打开对应的数据文件
 	for i, fid := range fileIds {
-		dataFile, err := data.OpenDataFile(db.options.DirPath, uint32(fid))
+		ioType := fio.StandardFIO
+		dataFile, err := data.OpenDataFile(db.options.DirPath, uint32(fid), ioType)
 		if err != nil {
 			return err
 		}
